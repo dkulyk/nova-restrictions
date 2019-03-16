@@ -1,64 +1,49 @@
 <template>
-    <modal
-            tabindex="-1"
-            role="dialog"
-            @modal-close="handleClose"
-    >
+    <modal tabindex="-1" role="dialog" @modal-close="handleClose">
         <form
-                autocomplete="off"
-                @keydown="handleKeydown"
-                @submit.prevent.stop="handleConfirm"
-                class="bg-white rounded-lg shadow-lg overflow-hidden w-action-fields"
+            autocomplete="off"
+            @keydown="handleKeydown"
+            @submit.prevent.stop="handleConfirm"
+            class="bg-white rounded-lg shadow-lg overflow-hidden w-action-fields"
         >
             <div>
                 <heading :level="2" class="pt-8 px-8">{{ action.name }}</heading>
 
                 <div>
                     <div class="action">
-                        <default-field>
-
-                        </default-field>
-                        <default-field>
-
-                        </default-field>
-                        <default-field>
-
-                        </default-field>
+                        <default-field> </default-field>
+                        <default-field> </default-field>
+                        <default-field> </default-field>
                     </div>
 
                     <!-- Action Fields -->
-                    <div
-                            class="action"
-                            v-for="field in fields"
-                            :key="field.attribute"
-                    >
+                    <div class="action" v-for="field in fields" :key="field.attribute">
                         <component
-                                :is="'form-' + field.component"
-                                :errors="errors"
-                                :resource-name="resourceName"
-                                :field="field"
+                            :is="'form-' + field.component"
+                            :errors="errors"
+                            :resource-name="resourceName"
+                            :field="field"
                         />
                     </div>
-
                 </div>
             </div>
 
             <div class="bg-30 px-6 py-3 flex">
                 <div class="flex items-center ml-auto">
                     <button
-                            type="button"
-                            @click.prevent="handleClose"
-                            class="btn text-80 font-normal h-9 px-3 mr-3 btn-link"
+                        type="button"
+                        @click.prevent="handleClose"
+                        class="btn text-80 font-normal h-9 px-3 mr-3 btn-link"
                     >
                         {{ __('Cancel') }}
                     </button>
 
                     <button
-                            ref="runButton"
-                            :disabled="working"
-                            type="button"
-                            @click="executeAction"
-                            class="btn btn-default btn-primary"
+                        ref="runButton"
+                        :disabled="working"
+                        type="button"
+                        @click="executeAction"
+                        class="btn btn-default btn-primary"
                     >
                         <loader v-if="working" width="30"></loader>
                         <span v-else>{{ __('Run Action') }}</span>
@@ -85,15 +70,15 @@ export default {
         additionalFields: [],
         field: {
             prefixComponent: true,
-            attribute: "productToAdd",
+            attribute: 'productToAdd',
             value: null,
             panel: null,
             sortable: false,
             nullable: false,
-            textAlign: "left",
-            resourceName: "shop-products",
-            singularLabel: "Продукт",
-            belongsToRelationship: "productToAdd",
+            textAlign: 'left',
+            resourceName: 'shop-products',
+            singularLabel: 'Продукт',
+            belongsToRelationship: 'productToAdd',
             belongsToId: null,
             searchable: true,
         },
@@ -115,33 +100,29 @@ export default {
         // } else {
         //     this.$refs.runButton.focus()
         // }
-
-
     },
 
     methods: {
-
         /**
          * Get the resources that may be related to this resource.
          */
         getAvailableResources() {
-            return this
-                .fetchAvailableResources(this.resourceName, this.field.attribute, this.queryParams)
-                .then(({data: {resources, softDeletes, withTrashed}}) => {
-                    if (this.initializingWithExistingResource || !this.isSearchable) {
-                        this.withTrashed = withTrashed
-                    }
+            return this.fetchAvailableResources(
+                this.resourceName,
+                this.field.attribute,
+                this.queryParams
+            ).then(({ data: { resources, softDeletes, withTrashed } }) => {
+                if (this.initializingWithExistingResource || !this.isSearchable) {
+                    this.withTrashed = withTrashed
+                }
 
-                    // Turn off initializing the existing resource after the first time
-                    this.availableResources = resources
-                })
+                // Turn off initializing the existing resource after the first time
+                this.availableResources = resources
+            })
         },
 
         fetchAvailableResources(resourceName, fieldAttribute, params) {
-            return Nova.request().get(
-                `/nova-api/shop-items/associatable/product`,
-                params
-            )
+            return Nova.request().get(`/nova-api/shop-items/associatable/product`, params)
         },
 
         /**
@@ -166,7 +147,6 @@ export default {
          * Close the modal.
          */
         handleClose() {
-
             this.$emit('close')
         },
 
@@ -178,7 +158,7 @@ export default {
         retrieveFields() {
             this.execute('fields')
                 .then(response => {
-                    this.fields = response.data;
+                    this.fields = response.data
                 })
                 .catch(error => {
                     if (error.response.status == 422) {
@@ -203,7 +183,6 @@ export default {
          * Execute the selected action.
          */
         executeAction() {
-
             this.execute()
                 .then(response => {
                     this.handleActionResponse(response.data)
@@ -223,11 +202,11 @@ export default {
          */
         handleActionResponse(response) {
             if (response.message) {
-                this.$toasted.show(response.message, {type: 'success'})
+                this.$toasted.show(response.message, { type: 'success' })
             } else if (response.danger) {
-                this.$toasted.show(response.danger, {type: 'error'})
+                this.$toasted.show(response.danger, { type: 'error' })
             } else {
-                this.$toasted.show(this.__('The action ran successfully!'), {type: 'success'})
+                this.$toasted.show(this.__('The action ran successfully!'), { type: 'success' })
             }
             this.handleClose()
         },
@@ -248,7 +227,6 @@ export default {
     },
 
     computed: {
-
         /**
          * Get the query params for getting available resources
          */
@@ -259,7 +237,7 @@ export default {
                     search: this.search,
                 },
             }
-        }
-    }
+        },
+    },
 }
 </script>

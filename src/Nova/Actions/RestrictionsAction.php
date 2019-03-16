@@ -3,9 +3,9 @@
 namespace DKulyk\Restricitons\Nova\Actions;
 
 use Closure;
-use DKulyk\Restrictions\RestrictionsScope;
-use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Resource;
+use Laravel\Nova\Actions\Action;
+use DKulyk\Restrictions\RestrictionsScope;
 
 class RestrictionsAction extends Action
 {
