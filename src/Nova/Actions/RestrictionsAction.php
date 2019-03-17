@@ -2,15 +2,15 @@
 
 namespace DKulyk\Restrictions\Nova\Actions;
 
-use DKulyk\Restrictions\Entities\Restriction;
-use DKulyk\Restrictions\RestrictionsScope;
-use Illuminate\Database\Eloquent\Model;
+use Laravel\Nova\Nova;
+use Laravel\Nova\Resource;
 use Illuminate\Http\Request;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\Boolean;
+use Illuminate\Database\Eloquent\Model;
+use DKulyk\Restrictions\RestrictionsScope;
+use DKulyk\Restrictions\Entities\Restriction;
 use Laravel\Nova\Http\Requests\ActionRequest;
-use Laravel\Nova\Nova;
-use Laravel\Nova\Resource;
 
 class RestrictionsAction extends Action
 {
@@ -39,7 +39,7 @@ class RestrictionsAction extends Action
      */
     public function authorizedToSee(Request $request)
     {
-        return !is_null($this->getScope()) && parent::authorizedToSee($request);
+        return ! is_null($this->getScope()) && parent::authorizedToSee($request);
     }
 
     /**
@@ -70,7 +70,7 @@ class RestrictionsAction extends Action
         $restriction->entity()->associate($model);
         $restriction->save();
 
-        /** @var Resource $restrictionResource */
+        /** @var resource $restrictionResource */
         $restrictionResource = Nova::resourceForModel($restriction->restriction);
 
         switch ($request->query('method')) {
@@ -121,7 +121,7 @@ class RestrictionsAction extends Action
                         'label' => $resource->title(),
 
                     ];
-                })
+                }),
         ];
     }
 
@@ -131,9 +131,9 @@ class RestrictionsAction extends Action
             'restrictions' => collect($this->getScope()->getAllowedRestrictions())->map(function (string $restriction) {
                 return [
                     'value' => $restriction,
-                    'label' => Nova::resourceForModel($restriction)::label()
+                    'label' => Nova::resourceForModel($restriction)::label(),
                 ];
-            })
+            }),
         ]);
     }
 
