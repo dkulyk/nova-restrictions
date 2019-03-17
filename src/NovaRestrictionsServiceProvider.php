@@ -12,7 +12,7 @@ final class NovaRestrictionsServiceProvider extends ServiceProvider
     public function boot()
     {
         Event::listen(ServingNova::class, function () {
-            Nova::script('dkulyk-restrictions', dirname(__DIR__) . '/dist/js/restrictions.js');
+            Nova::script('dkulyk-restrictions', dirname(__DIR__).'/dist/js/restrictions.js');
         });
     }
 }
