@@ -11,57 +11,99 @@
                 class="bg-white rounded-lg shadow-lg overflow-hidden w-action-fields"
         >
             <div>
-                <heading :level="2" class="pt-8 px-8">{{ action.name }}</heading>
-
                 <div>
                     <div class="action">
-                        <default-field>
-
+                        <default-field
+                                fieldName="Restriction"
+                                :field="{name:'restriction', helpText:''}"
+                                :show-help-text="false"
+                        >
+                            <template slot="field">
+                                <select-control
+                                        id="restriction"
+                                        v-model="restriction"
+                                        class="w-full form-control form-select"
+                                        :options="action.restrictions"
+                                ></select-control>
+                            </template>
                         </default-field>
-                        <default-field>
-
+                        <default-field
+                                fieldName="Type"
+                                :field="{name:'enabled', helpText:''}"
+                                :show-help-text="false"
+                        >
+                            <template slot="field">
+                                <checkbox
+                                        class="py-2"
+                                        @input="toggleEnabled"
+                                        id="enabled"
+                                        :name="enabled"
+                                        :checked="enabled"
+                                        :options="[]"
+                                />
+                            </template>
                         </default-field>
-                        <default-field>
-
+                        <default-field
+                                fieldName="Тип"
+                                :field="{name:'tyoe', helpText:''}"
+                                :show-help-text="false"
+                        >
+                            <template slot="field">
+                                <select-control
+                                        id="type"
+                                        v-model="type"
+                                        class="w-full form-control form-select"
+                                        :options="[]"
+                                >
+                                    <option value="1">Deny only</option>
+                                    <option value="2">Allow only</option>
+                                </select-control>
+                            </template>
+                        </default-field>
+                        <default-field
+                                :fieldName="Number(type) === 1 ? 'Deny' : 'Allow'"
+                                :field="{name:'tyoe', helpText:''}"
+                                :show-help-text="false"
+                        >
+                            <template slot="field">
+                                <search-input
+                                        @input="performSearch"
+                                        @selected="selectResource"
+                                        :data="options"
+                                        trackBy="value"
+                                        class="mb-3"
+                                        :clearable="false"
+                                >
+                                    <div slot="option" slot-scope="{ option }" class="flex items-center">
+                                        {{ option.label }}
+                                    </div>
+                                </search-input>
+                                <div v-for="option in rules" :key="option.value" class="py-2 relative">
+                                    <button
+                                            type="button"
+                                            @click.stop="detach(option.value)"
+                                    >
+                                        <icon type="delete"></icon>
+                                    </button>
+                                    <span>{{ option.label }}</span>
+                                </div>
+                            </template>
                         </default-field>
                     </div>
-
-                    <!-- Action Fields -->
-                    <div
-                            class="action"
-                            v-for="field in fields"
-                            :key="field.attribute"
-                    >
-                        <component
-                                :is="'form-' + field.component"
-                                :errors="errors"
-                                :resource-name="resourceName"
-                                :field="field"
-                        />
-                    </div>
-
                 </div>
             </div>
 
             <div class="bg-30 px-6 py-3 flex">
                 <div class="flex items-center ml-auto">
                     <button
-                            type="button"
-                            @click.prevent="handleClose"
-                            class="btn text-80 font-normal h-9 px-3 mr-3 btn-link"
-                    >
-                        {{ __('Cancel') }}
-                    </button>
-
-                    <button
                             ref="runButton"
                             :disabled="working"
                             type="button"
-                            @click="executeAction"
+                            @click.prevent="handleClose"
                             class="btn btn-default btn-primary"
                     >
                         <loader v-if="working" width="30"></loader>
-                        <span v-else>{{ __('Run Action') }}</span>
+                        <span v-else>{{ __('Done') }}</span>
                     </button>
                 </div>
             </div>
@@ -70,11 +112,8 @@
 </template>
 
 <script>
-import { Errors } from 'form-backend-validation'
-import PerformsSearches from 'laravel-nova/src/mixins/PerformsSearches'
 
 export default {
-    mixins: [PerformsSearches],
     props: {
         resourceName: {},
         action: {},
@@ -83,65 +122,37 @@ export default {
 
     data: () => ({
         additionalFields: [],
-        field: {
-            prefixComponent: true,
-            attribute: "productToAdd",
-            value: null,
-            panel: null,
-            sortable: false,
-            nullable: false,
-            textAlign: "left",
-            resourceName: "shop-products",
-            singularLabel: "Продукт",
-            belongsToRelationship: "productToAdd",
-            belongsToId: null,
-            searchable: true,
-        },
-        errors: new Errors(),
-        fields: [],
         working: false,
+        restriction: null,
+        enabled: false,
+        type: 0,
+        options: [],
+        rules: [],
+        loading: false,
     }),
-
-    watch: {},
 
     /**
      * Mount the component.
      */
     mounted() {
-        // // // If the modal has inputs, let's highlight the first one, otherwise
-        // // // let's highlight the submit button
-        // if (document.querySelectorAll('.modal input').length) {
-        //     document.querySelectorAll('.modal input')[0].focus()
-        // } else {
-        //     this.$refs.runButton.focus()
-        // }
+        this.restriction = _.first(this.action.restrictions).value
+    },
 
-
+    watch: {
+        restriction(newValue) {
+            this.getRestriction(newValue);
+        },
+        enabled() {
+            this.update()
+        },
+        type() {
+            this.update()
+        }
     },
 
     methods: {
-
-        /**
-         * Get the resources that may be related to this resource.
-         */
-        getAvailableResources() {
-            return this
-                .fetchAvailableResources(this.resourceName, this.field.attribute, this.queryParams)
-                .then(({data: {resources, softDeletes, withTrashed}}) => {
-                    if (this.initializingWithExistingResource || !this.isSearchable) {
-                        this.withTrashed = withTrashed
-                    }
-
-                    // Turn off initializing the existing resource after the first time
-                    this.availableResources = resources
-                })
-        },
-
-        fetchAvailableResources(resourceName, fieldAttribute, params) {
-            return Nova.request().get(
-                `/nova-api/shop-items/associatable/product`,
-                params
-            )
+        toggleEnabled() {
+            this.enabled = !this.enabled
         },
 
         /**
@@ -159,95 +170,125 @@ export default {
          * Execute the selected action.
          */
         handleConfirm(e) {
-            this.$emit('confirm')
         },
 
         /**
          * Close the modal.
          */
         handleClose() {
-
             this.$emit('close')
         },
 
-        selectResource(resource) {
-            this.selectedResource = resource
-            this.retrieveFields(resource.values)
-        },
+        selectResource(rule) {
+            this.options = []
 
-        retrieveFields() {
-            this.execute('fields')
-                .then(response => {
-                    this.fields = response.data;
-                })
-                .catch(error => {
-                    if (error.response.status == 422) {
-                        this.errors = new Errors(error.response.data.errors)
-                    }
-                })
-        },
-
-        execute(method = '') {
             return Nova.request({
                 method: 'post',
                 url: this.endpoint || `/nova-api/${this.resourceName}/action`,
                 params: {
                     action: this.action.uriKey,
-                    method: method,
+                    method: 'attach',
+
                 },
-                data: this.actionFormData(),
+                data: {
+                    'resources': this.selectedResources,
+                    restriction: this.restriction,
+                    rule: rule.value,
+                }
+            }).then(response => this.fill(response.data))
+        },
+
+        update() {
+            if (this.loading) return
+
+            return Nova.request({
+                method: 'post',
+                url: this.endpoint || `/nova-api/${this.resourceName}/action`,
+                params: {
+                    action: this.action.uriKey,
+                    method: 'update',
+
+                },
+                data: {
+                    'resources': this.selectedResources,
+                    restriction: this.restriction,
+                    enabled: this.enabled,
+                    type: this.type,
+                }
+            }).then(response => this.fill(response.data))
+        },
+
+        detach(value) {
+            return Nova.request({
+                method: 'post',
+                url: this.endpoint || `/nova-api/${this.resourceName}/action`,
+                params: {
+                    action: this.action.uriKey,
+                    method: 'detach',
+
+                },
+                data: {
+                    'resources': this.selectedResources,
+                    restriction: this.restriction,
+                    rule: value,
+                }
+            }).then(response => this.fill(response.data))
+        },
+
+        getRestriction(restriction) {
+            return Nova.request({
+                method: 'post',
+                url: this.endpoint || `/nova-api/${this.resourceName}/action`,
+                params: {
+                    action: this.action.uriKey,
+                    method: 'restriction',
+
+                },
+                data: {
+                    'resources': this.selectedResources,
+                    restriction: restriction,
+                }
+            }).then(response => this.fill(response.data))
+        },
+
+        performSearch(value) {
+            return Nova.request({
+                method: 'post',
+                url: this.endpoint || `/nova-api/${this.resourceName}/action`,
+                params: {
+                    action: this.action.uriKey,
+                    method: 'search',
+
+                },
+                data: {
+                    'resources': this.selectedResources,
+                    restriction: this.restriction,
+                    search: value
+                }
+            }).then(response => {
+                this.options = response.data
             })
         },
 
-        /**
-         * Execute the selected action.
-         */
-        executeAction() {
-
-            this.execute()
-                .then(response => {
-                    this.handleActionResponse(response.data)
-                    this.working = false
-                })
-                .catch(error => {
-                    this.working = false
-
-                    if (error.response.status == 422) {
-                        this.errors = new Errors(error.response.data.errors)
-                    }
-                })
-        },
-
-        /**
-         * Handle the action response. Typically either a message, download or a redirect.
-         */
-        handleActionResponse(response) {
-            if (response.message) {
-                this.$toasted.show(response.message, {type: 'success'})
-            } else if (response.danger) {
-                this.$toasted.show(response.danger, {type: 'error'})
-            } else {
-                this.$toasted.show(this.__('The action ran successfully!'), {type: 'success'})
-            }
-            this.handleClose()
-        },
-
-        /**
-         * Gather the action FormData for the given action.
-         */
-        actionFormData() {
-            return _.tap(new FormData(), formData => {
-                formData.append('resources', this.selectedResources)
-                formData.append('product', this.selectedResource.value)
-
-                _.each(this.fields, field => {
-                    field.fill(formData)
-                })
+        fill(data) {
+            this.loading = true
+            this.enabled = data.enabled
+            this.type = data.type
+            this.rules = data.rules
+            this.$nextTick(() => {
+                this.loading = false
             })
         },
     },
 
     computed: {
+
+        restrictionsField() {
+            return {
+                attribute: 'restriction',
+
+            }
+        },
 
         /**
          * Get the query params for getting available resources
