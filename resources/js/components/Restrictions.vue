@@ -28,7 +28,7 @@
                             </template>
                         </default-field>
                         <default-field
-                                fieldName="Type"
+                                fieldName="Enabled"
                                 :field="{name:'enabled', helpText:''}"
                                 :show-help-text="false"
                         >
@@ -44,7 +44,7 @@
                             </template>
                         </default-field>
                         <default-field
-                                fieldName="Тип"
+                                fieldName="Rule"
                                 :field="{name:'tyoe', helpText:''}"
                                 :show-help-text="false"
                         >
